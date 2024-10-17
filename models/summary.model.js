@@ -29,6 +29,11 @@ Summary.init({
         },
         onDelete: 'CASCADE'
     },
+    count_transaction: {
+        allowNull: false,
+        type: DataTypes.BIGINT,
+        defaultValue: 0
+    },
     revenue_rts: {
         allowNull: false,
         type: DataTypes.DECIMAL(20, 2),

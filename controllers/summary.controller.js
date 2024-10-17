@@ -1,5 +1,6 @@
 const sequelize = require("../config/database");
 const ExcelHelper = require("../helper/excelHelper");
+const GoogleApi = require("../helper/googleApi");
 const Client = require("../models/client.model");
 const Summary = require("../models/summary.model")
 
@@ -9,8 +10,18 @@ class SummaryController {
 
         const datas = await ExcelHelper.convertExcelDataToArray(file);
 
-        const summary = await ExcelHelper.createInterfaceSummary(datas);
-        await Summary.bulkCreate(summary);
+        const plainSummary = await ExcelHelper.createInterfaceSummary(datas);
+        const summaries = (await Summary.bulkCreate(plainSummary)).map(summary => summary.get({ plain: true }));
+        const clients = await ExcelHelper.getClients();
+        for (const summary of summaries) {
+            const client = clients.find(client => client.id === summary.client_id);
+            if (!client) {
+                throw new Error('Client not found');
+            }
+            summary.clientName = client.name;
+            summary.typeTrans = client.type_trans;
+        }
+        await GoogleApi.insertExcel(summaries);
         return res.status(200).json({ message: 'Summary created successfully' });
     }
 
@@ -36,26 +47,12 @@ class SummaryController {
         const listPartners = await ExcelHelper.getPartners();
         const columnPartners = ExcelHelper.getSummaryColumnPartners(listPartners);
         const partnerSummaries = ExcelHelper.detailPartnersSummary(clientSummaries, columnPartners);
-        // for (const client of clientSummaries) {
-        //     for (const columnName of Object.keys(client)) {
-        //         for (const columnPartner of Object.keys(columnPartners)) {
-        //             for (const columnSummary of columnPartners[columnPartner]) {
-        //                 if (columnName === columnSummary) {
-        //                     if (!partnerSummaries[columnPartner]) {
-        //                         partnerSummaries[columnPartner] = {};
-        //                         partnerSummaries[columnPartner][columnName] = 0;
-        //                     }
-        //                     if (!partnerSummaries[columnPartner][columnName]) {
-        //                         partnerSummaries[columnPartner][columnName] = 0
-        //                     }
-        //                     partnerSummaries[columnPartner][columnName] += +client[columnName];
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
 
-        return res.status(200).json(partnerSummaries);
+        const writeToExcel = await ExcelHelper.writeDetailSummaryToExcel(clientSummaries, partnerSummaries);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=detailsummary.xlsx');
+        return res.status(200).send(writeToExcel);
+
     }
 }
 

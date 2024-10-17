@@ -79,6 +79,7 @@ class ExcelHelper {
                 no_batch: data['Batch No.'],
                 date: data['Date'],
                 client_id: findClient.id,
+                count_transaction: 1,
                 revenue_rts,
                 dpp_revenue_rts,
                 ppn_revenue_rts,
@@ -118,6 +119,7 @@ class ExcelHelper {
             if (!findUniqueData) {
                 storedUniqueDatas.push(uniqueData);
             } else {
+                findUniqueData.count_transaction += uniqueData.count_transaction
                 findUniqueData.revenue_rts += +uniqueData.revenue_rts
                 findUniqueData.dpp_revenue_rts += +uniqueData.dpp_revenue_rts
                 findUniqueData.ppn_revenue_rts += +uniqueData.ppn_revenue_rts
@@ -167,6 +169,7 @@ class ExcelHelper {
             attributes: [
                 'client_id',
                 'no_batch',
+                [sequelize.fn('SUM', sequelize.col('count_transaction')), 'count_transaction'],
                 [sequelize.fn('SUM', sequelize.col('revenue_rts')), 'revenue_rts'],
                 [sequelize.fn('SUM', sequelize.col('dpp_revenue_rts')), 'dpp_revenue_rts'],
                 [sequelize.fn('SUM', sequelize.col('ppn_revenue_rts')), 'ppn_revenue_rts'],
@@ -230,6 +233,7 @@ class ExcelHelper {
             { header: 'No Batch', key: 'no_batch', width: 10, },
             { header: 'Client Name', key: 'client_name', width: 30 },
             { header: 'Type Transactions', key: 'type_trans', width: 18 },
+            { header: 'Count Transactions', key: 'count_transaction', width: 18 },
             { header: 'Revenue RTS', key: 'revenue_rts', width: 15 },
             { header: 'DPP Revenue RTS', key: 'dpp_revenue_rts', width: 15 },
             { header: 'PPN Revenue RTS', key: 'ppn_revenue_rts', width: 15 },
@@ -267,6 +271,7 @@ class ExcelHelper {
             const noBatch = summaryData['no_batch'];
             const clientName = summaryData['name'];
             const typeTrans = summaryData['type_trans'];
+            const countTransaction = summaryData['count_transaction'];
             const revenue_rts = summaryData['revenue_rts'];
             const dpp_revenue_rts = summaryData['dpp_revenue_rts'];
             const ppn_revenue_rts = summaryData['ppn_revenue_rts'];
@@ -303,6 +308,7 @@ class ExcelHelper {
                 no_batch: noBatch,
                 client_name: clientName,
                 type_trans: typeTrans,
+                count_transaction: countTransaction,
                 revenue_rts: revenue_rts,
                 dpp_revenue_rts: dpp_revenue_rts,
                 ppn_revenue_rts: ppn_revenue_rts,
@@ -586,6 +592,55 @@ class ExcelHelper {
         }
 
         return partnerSummaries;
+    }
+
+    static async writeDetailSummaryToExcel(clientSummaries, partnerSummaries) {
+        const workbook = new ExcelJs.Workbook();
+        const worksheet = workbook.addWorksheet('Summary');
+        worksheet.columns = [
+            { header: 'Name', key: 'client_name', width: 30 },
+            { header: 'Revenue', key: 'revenue', width: 15 },
+            { header: 'DPP Revenue', key: 'dpp_revenue', width: 15 },
+            { header: 'PPN Revenue', key: 'ppn_revenue', width: 15 },
+            { header: 'PPH Revenue', key: 'pph_revenue', width: 15 },
+            { header: 'Total Revenue', key: 'total_revenue', width: 15 },
+            { header: 'Amount Req Cashwithdrawal Client', key: 'amount_req_cashwithdrawal_client', width: 30 },
+            { header: 'Total Settlement', key: 'total_settlement', width: 20 },
+        ];
+        for (const clientSummary of clientSummaries) {
+            worksheet.addRow({
+                client_name: clientSummary.name,
+                revenue: clientSummary.fee_client,
+                dpp_revenue: clientSummary.dpp_fee_client,
+                ppn_revenue: clientSummary.ppn_fee_client,
+                pph_revenue: clientSummary.pph_fee_client,
+                total_revenue: clientSummary.total_fee_client,
+                amount_req_cashwithdrawal_client: clientSummary.amount_req_cashwithdrawal_client,
+                total_settlement: clientSummary.total_settlement_fee_client
+            });
+        }
+
+        for (const partnerSummary of Object.keys(partnerSummaries)) {
+            worksheet.addRow({
+                client_name: partnerSummary,
+                revenue: partnerSummaries[partnerSummary][`fee_${partnerSummary.toLowerCase()}`],
+                dpp_revenue: partnerSummaries[partnerSummary][`dpp_fee_${partnerSummary.toLowerCase()}`],
+                ppn_revenue: partnerSummaries[partnerSummary][`ppn_fee_${partnerSummary.toLowerCase()}`],
+                pph_revenue: partnerSummaries[partnerSummary][`pph_fee_${partnerSummary.toLowerCase()}`],
+                total_revenue: partnerSummaries[partnerSummary][`total_settlement_fee_${partnerSummary.toLowerCase()}`],
+                amount_req_cashwithdrawal_client: 0,
+                total_settlement: partnerSummaries[partnerSummary][`total_settlement_fee_${partnerSummary.toLowerCase()}`]
+            });
+        }
+
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.views = [
+            {
+                state: 'frozen', ySplit: 1
+            }
+        ]
+        const buffer = await workbook.xlsx.writeBuffer();
+        return buffer;
     }
 
 }
