@@ -114,7 +114,7 @@ class ExcelHelper {
                 total_settlement_fee_client,
             };
             const findUniqueData = storedUniqueDatas.find(data => {
-                return data.no_batch === uniqueData.no_batch && data.date === uniqueData.date && data.client_id === uniqueData.client_id;
+                return data.no_batch === uniqueData.no_batch && data.client_id === uniqueData.client_id;
             })
             if (!findUniqueData) {
                 storedUniqueDatas.push(uniqueData);
@@ -166,43 +166,6 @@ class ExcelHelper {
         startBatch = +startBatch || 1;
         endBatch = +endBatch || 999999999;
         const summary = await Summary.findAll({
-            attributes: [
-                'client_id',
-                'no_batch',
-                [sequelize.fn('SUM', sequelize.col('count_transaction')), 'count_transaction'],
-                [sequelize.fn('SUM', sequelize.col('revenue_rts')), 'revenue_rts'],
-                [sequelize.fn('SUM', sequelize.col('dpp_revenue_rts')), 'dpp_revenue_rts'],
-                [sequelize.fn('SUM', sequelize.col('ppn_revenue_rts')), 'ppn_revenue_rts'],
-                [sequelize.fn('SUM', sequelize.col('pph_revenue_rts')), 'pph_revenue_rts'],
-                [sequelize.fn('SUM', sequelize.col('total_settlement_revenue_rts')), 'total_settlement_revenue_rts'],
-                [sequelize.fn('SUM', sequelize.col('fee_rts')), 'fee_rts'],
-                [sequelize.fn('SUM', sequelize.col('dpp_fee_rts')), 'dpp_fee_rts'],
-                [sequelize.fn('SUM', sequelize.col('ppn_fee_rts')), 'ppn_fee_rts'],
-                [sequelize.fn('SUM', sequelize.col('pph_fee_rts')), 'pph_fee_rts'],
-                [sequelize.fn('SUM', sequelize.col('total_settlement_fee_rts')), 'total_settlement_fee_rts'],
-                [sequelize.fn('SUM', sequelize.col('fee_ndp')), 'fee_ndp'],
-                [sequelize.fn('SUM', sequelize.col('dpp_fee_ndp')), 'dpp_fee_ndp'],
-                [sequelize.fn('SUM', sequelize.col('ppn_fee_ndp')), 'ppn_fee_ndp'],
-                [sequelize.fn('SUM', sequelize.col('pph_fee_ndp')), 'pph_fee_ndp'],
-                [sequelize.fn('SUM', sequelize.col('total_settlement_fee_ndp')), 'total_settlement_fee_ndp'],
-                [sequelize.fn('SUM', sequelize.col('fee_ads')), 'fee_ads'],
-                [sequelize.fn('SUM', sequelize.col('dpp_fee_ads')), 'dpp_fee_ads'],
-                [sequelize.fn('SUM', sequelize.col('ppn_fee_ads')), 'ppn_fee_ads'],
-                [sequelize.fn('SUM', sequelize.col('pph_fee_ads')), 'pph_fee_ads'],
-                [sequelize.fn('SUM', sequelize.col('total_settlement_fee_ads')), 'total_settlement_fee_ads'],
-                [sequelize.fn('SUM', sequelize.col('fee_atmi')), 'fee_atmi'],
-                [sequelize.fn('SUM', sequelize.col('dpp_fee_atmi')), 'dpp_fee_atmi'],
-                [sequelize.fn('SUM', sequelize.col('ppn_fee_atmi')), 'ppn_fee_atmi'],
-                [sequelize.fn('SUM', sequelize.col('pph_fee_atmi')), 'pph_fee_atmi'],
-                [sequelize.fn('SUM', sequelize.col('total_settlement_fee_atmi')), 'total_settlement_fee_atmi'],
-                [sequelize.fn('SUM', sequelize.col('fee_client')), 'fee_client'],
-                [sequelize.fn('SUM', sequelize.col('dpp_fee_client')), 'dpp_fee_client'],
-                [sequelize.fn('SUM', sequelize.col('ppn_fee_client')), 'ppn_fee_client'],
-                [sequelize.fn('SUM', sequelize.col('pph_fee_client')), 'pph_fee_client'],
-                [sequelize.fn('SUM', sequelize.col('total_fee_client')), 'total_fee_client'],
-                [sequelize.fn('SUM', sequelize.col('amount_req_cashwithdrawal_client')), 'amount_req_cashwithdrawal_client'],
-                [sequelize.fn('SUM', sequelize.col('total_settlement_fee_client')), 'total_settlement_fee_client'],
-            ],
             where: {
                 no_batch: {
                     [Op.gte]: startBatch,
@@ -215,8 +178,6 @@ class ExcelHelper {
                     attributes: ['name', 'type_trans'],
                 }
             ],
-            group: ['client_id', 'no_batch', 'name', 'type_trans', 'client.id'],
-            order: [['no_batch', 'asc'], ['client_id', 'asc']]
         });
         return summary.map(data => {
             return {
@@ -430,10 +391,10 @@ class ExcelHelper {
         const partners = [];
         for (const summary of summaries) {
             const client = clients.find(client => client.name === summary.name);
-            const partner = partners.find(partner => partner.name === client.name);
+            const partner = partners.find(partner => partner.name === client.name && partner.no_batch === summary.no_batch);
             delete summary.type_trans;
-            delete summary.client_id;
-            delete summary.no_batch;
+            summary.client_id;
+            summary.no_batch;
             summary.revenue_rts = +summary.revenue_rts
             summary.dpp_revenue_rts = +summary.dpp_revenue_rts
             summary.ppn_revenue_rts = +summary.ppn_revenue_rts
@@ -547,13 +508,13 @@ class ExcelHelper {
         const mapPartnerValue = {};
         for (const columnName of columnNames) {
             const column = listPartners.find(str => {
-                return columnName.toUpperCase().includes("FEE_" + str.name)
+                return columnName.toUpperCase().includes("FEE_" + str.code.toUpperCase());
             });
             if (column) {
-                if (mapPartnerValue[column.name]) {
-                    mapPartnerValue[column.name].push(columnName);
+                if (mapPartnerValue[`${column.name}-${column.code}`]) {
+                    mapPartnerValue[`${column.name}-${column.code}`].push(columnName);
                 } else {
-                    mapPartnerValue[column.name] = [columnName];
+                    mapPartnerValue[`${column.name}-${column.code}`] = [columnName];
                 }
             }
         }
@@ -571,23 +532,28 @@ class ExcelHelper {
             for (const columnName of Object.keys(client)) {
                 for (const columnPartner of Object.keys(columnPartners)) {
                     for (const columnSummary of columnPartners[columnPartner]) {
+                        if (!partnerSummaries[`${client['no_batch']}`]) {
+                            partnerSummaries[`${client['no_batch']}`] = {}
+                        }
                         if (columnName === columnSummary) {
-                            if (!partnerSummaries[columnPartner]) {
-                                partnerSummaries[columnPartner] = {};
-                                partnerSummaries[columnPartner][columnName] = 0;
+                            if (!partnerSummaries[`${client['no_batch']}`][columnPartner]) {
+                                partnerSummaries[`${client['no_batch']}`][columnPartner] = {};
+                                partnerSummaries[`${client['no_batch']}`][columnPartner][columnName] = 0;
                             }
-                            if (!partnerSummaries[columnPartner][columnName]) {
-                                partnerSummaries[columnPartner][columnName] = 0
+                            if (!partnerSummaries[`${client['no_batch']}`][columnPartner][columnName]) {
+                                partnerSummaries[`${client['no_batch']}`][columnPartner][columnName] = 0
                             }
-                            partnerSummaries[columnPartner][columnName] += +client[columnName];
+                            partnerSummaries[`${client['no_batch']}`][columnPartner][columnName] += +client[columnName];
                         }
                     }
                 }
             }
         }
-        for (const partnerSummary of Object.keys(partnerSummaries)) {
-            for (const columnName of Object.keys(partnerSummaries[partnerSummary])) {
-                partnerSummaries[partnerSummary][columnName] = partnerSummaries[partnerSummary][columnName].toFixed(2)
+        for (const noBatch of Object.keys(partnerSummaries)) {
+            for (const partner of Object.keys(partnerSummaries[noBatch])) {
+                for (const columnName of Object.keys(partnerSummaries[noBatch][partner])) {
+                    partnerSummaries[noBatch][partner][columnName] = partnerSummaries[noBatch][partner][columnName].toFixed(2)
+                }
             }
         }
 
@@ -598,6 +564,7 @@ class ExcelHelper {
         const workbook = new ExcelJs.Workbook();
         const worksheet = workbook.addWorksheet('Summary');
         worksheet.columns = [
+            { header: 'No Batch', key: 'no_batch', width: 15 },
             { header: 'Name', key: 'client_name', width: 30 },
             { header: 'Revenue', key: 'revenue', width: 15 },
             { header: 'DPP Revenue', key: 'dpp_revenue', width: 15 },
@@ -609,6 +576,7 @@ class ExcelHelper {
         ];
         for (const clientSummary of clientSummaries) {
             worksheet.addRow({
+                no_batch: clientSummary.no_batch,
                 client_name: clientSummary.name,
                 revenue: clientSummary.fee_client,
                 dpp_revenue: clientSummary.dpp_fee_client,
@@ -620,17 +588,22 @@ class ExcelHelper {
             });
         }
 
-        for (const partnerSummary of Object.keys(partnerSummaries)) {
-            worksheet.addRow({
-                client_name: partnerSummary,
-                revenue: partnerSummaries[partnerSummary][`fee_${partnerSummary.toLowerCase()}`],
-                dpp_revenue: partnerSummaries[partnerSummary][`dpp_fee_${partnerSummary.toLowerCase()}`],
-                ppn_revenue: partnerSummaries[partnerSummary][`ppn_fee_${partnerSummary.toLowerCase()}`],
-                pph_revenue: partnerSummaries[partnerSummary][`pph_fee_${partnerSummary.toLowerCase()}`],
-                total_revenue: partnerSummaries[partnerSummary][`total_settlement_fee_${partnerSummary.toLowerCase()}`],
-                amount_req_cashwithdrawal_client: 0,
-                total_settlement: partnerSummaries[partnerSummary][`total_settlement_fee_${partnerSummary.toLowerCase()}`]
-            });
+        for (const noBatch of Object.keys(partnerSummaries)) {
+            for (const partner of Object.keys(partnerSummaries[noBatch])) {
+                const clientName = partner.split('-')[0];
+                const codeClient = partner.split('-')[1];
+                worksheet.addRow({
+                    no_batch: noBatch,
+                    client_name: clientName,
+                    revenue: partnerSummaries[noBatch][partner][`fee_${codeClient.toLowerCase()}`],
+                    dpp_revenue: partnerSummaries[noBatch][partner][`dpp_fee_${codeClient.toLowerCase()}`],
+                    ppn_revenue: partnerSummaries[noBatch][partner][`ppn_fee_${codeClient.toLowerCase()}`],
+                    pph_revenue: partnerSummaries[noBatch][partner][`pph_fee_${codeClient.toLowerCase()}`],
+                    total_revenue: partnerSummaries[noBatch][partner][`total_settlement_fee_${codeClient.toLowerCase()}`],
+                    amount_req_cashwithdrawal_client: 0,
+                    total_settlement: partnerSummaries[noBatch][partner][`total_settlement_fee_${codeClient.toLowerCase()}`]
+                });
+            }
         }
 
         worksheet.getRow(1).font = { bold: true };

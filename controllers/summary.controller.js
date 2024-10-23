@@ -47,7 +47,6 @@ class SummaryController {
         const listPartners = await ExcelHelper.getPartners();
         const columnPartners = ExcelHelper.getSummaryColumnPartners(listPartners);
         const partnerSummaries = ExcelHelper.detailPartnersSummary(clientSummaries, columnPartners);
-
         const writeToExcel = await ExcelHelper.writeDetailSummaryToExcel(clientSummaries, partnerSummaries);
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', 'attachment; filename=detailsummary.xlsx');

@@ -19,7 +19,6 @@ class GoogleApi {
         const spreadSheetId = process.env.SPREADSHEET_ID;
         const values = summaries.map(summary => [
             summary.no_batch,
-            moment(summary.date).format('DD MMM YYYY'),
             summary.clientName,
             summary.typeTrans,
             summary.count_transaction,

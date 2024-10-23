@@ -16,10 +16,6 @@ Summary.init({
         allowNull: false,
         type: DataTypes.BIGINT
     },
-    date: {
-        allowNull: false,
-        type: DataTypes.DATE
-    },
     client_id: {
         allowNull: false,
         type: DataTypes.BIGINT,

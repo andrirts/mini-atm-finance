@@ -12,6 +12,10 @@ Partner.init({
         autoIncrement: true,
         primaryKey: true
     },
+    code: {
+        allowNull: false,
+        type: DataTypes.STRING
+    },
     name: {
         allowNull: false,
         type: DataTypes.STRING
