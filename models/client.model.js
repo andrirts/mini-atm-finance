@@ -12,6 +12,10 @@ Client.init({
         autoIncrement: true,
         primaryKey: true
     },
+    batch: {
+        allowNull: false,
+        type: DataTypes.STRING
+    },
     code: {
         allowNull: false,
         type: DataTypes.STRING,
@@ -23,6 +27,11 @@ Client.init({
     type_trans: {
         allowNull: false,
         type: DataTypes.STRING
+    },
+    acq_fee_rts: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
     },
     acq_fee_atmi: {
         allowNull: false,
@@ -39,22 +48,17 @@ Client.init({
         type: DataTypes.DECIMAL(20, 2),
         defaultValue: 0
     },
-    switching_fee_alto: {
+    acq_fee_switching_alto: {
         allowNull: false,
         type: DataTypes.DECIMAL(20, 2),
         defaultValue: 0
     },
-    recon_fee_alto: {
+    acq_fee_recon_alto: {
         allowNull: false,
         type: DataTypes.DECIMAL(20, 2),
         defaultValue: 0
     },
     beneficiary: {
-        allowNull: false,
-        type: DataTypes.DECIMAL(20, 2),
-        defaultValue: 0
-    },
-    recon_fee_alto: {
         allowNull: false,
         type: DataTypes.DECIMAL(20, 2),
         defaultValue: 0
@@ -69,6 +73,21 @@ Client.init({
         type: DataTypes.DECIMAL(20, 2),
         defaultValue: 0
     },
+    acq_fee_cashlez: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    revenue_rts: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    total: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    }
 }, {
     sequelize: sequelize,
     modelName: 'client',

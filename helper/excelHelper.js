@@ -33,13 +33,24 @@ class ExcelHelper {
         const clients = await this.getClients();
         const storedUniqueDatas = [];
         for (const data of arrayDatas) {
+            const batch = +data['Batch No.'];
             const codeTerminal = data['Terminal ID'].slice(0, 2);
             const typeTransaction = data['Type Trans'];
-            const findClient = clients.find(client => client.code === codeTerminal && client.type_trans === typeTransaction);
+            // const findClient = clients.find(client => client.code === codeTerminal && client.type_trans === typeTransaction );
+            const findClient = clients.find(client => {
+                const startBatch = +(client.batch.split('-')[0]);
+                const endBatch = +(client.batch.split('-')[1]);
+                if (batch >= startBatch && batch <= endBatch) {
+                    // console.log(client.code, codeTerminal, client.type_trans, typeTransaction, batch, startBatch, endBatch)
+                    return client.code === codeTerminal && client.type_trans === typeTransaction
+                }
+                return false
+            });
             if (!findClient) {
                 throw new Error(`Client with code ${codeTerminal} not found`);
             }
-            const revenue_rts = +data['Acquiring Fee RTS']
+            const beneficiary = +findClient['beneficiary'];
+            const revenue_rts = +findClient['revenue_rts'];
             const dpp_revenue_rts = revenue_rts / 1.11;
             const ppn_revenue_rts = dpp_revenue_rts * 11 / 100;
             const pph_revenue_rts = dpp_revenue_rts * 2 / 100;
@@ -64,6 +75,21 @@ class ExcelHelper {
             const ppn_fee_atmi = dpp_fee_atmi * 11 / 100;
             const pph_fee_atmi = dpp_fee_atmi * 2 / 100;
             const total_settlement_fee_atmi = dpp_fee_atmi + ppn_fee_atmi - pph_fee_atmi;
+            const fee_switching_alto = +findClient['acq_fee_switching_alto'];
+            const dpp_fee_switching_alto = fee_switching_alto / 1.11;
+            const ppn_fee_switching_alto = dpp_fee_switching_alto * 11 / 100;
+            const pph_fee_switching_alto = dpp_fee_switching_alto * 2 / 100;
+            const total_settlement_fee_switching_alto = dpp_fee_switching_alto + ppn_fee_switching_alto - pph_fee_switching_alto;
+            const fee_recon_alto = +findClient['acq_fee_recon_alto'];
+            const dpp_fee_recon_alto = fee_recon_alto / 1.11;
+            const ppn_fee_recon_alto = dpp_fee_recon_alto * 11 / 100;
+            const pph_fee_recon_alto = dpp_fee_recon_alto * 2 / 100;
+            const total_settlement_fee_recon_alto = dpp_fee_recon_alto + ppn_fee_recon_alto - pph_fee_recon_alto;
+            const fee_cashlez = +findClient['acq_fee_cashlez'];
+            const dpp_fee_cashlez = fee_cashlez / 1.11;
+            const ppn_fee_cashlez = dpp_fee_cashlez * 11 / 100;
+            const pph_fee_cashlez = dpp_fee_cashlez * 2 / 100;
+            const total_settlement_fee_cashlez = dpp_fee_cashlez + ppn_fee_cashlez - pph_fee_cashlez;
             const fee_client = +findClient['acq_fee_client'];
             const dpp_fee_client = fee_client / 1.11;
             const ppn_fee_client = dpp_fee_client * 11 / 100;
@@ -80,6 +106,7 @@ class ExcelHelper {
                 date: data['Date'],
                 client_id: findClient.id,
                 count_transaction: 1,
+                beneficiary,
                 revenue_rts,
                 dpp_revenue_rts,
                 ppn_revenue_rts,
@@ -112,6 +139,21 @@ class ExcelHelper {
                 total_fee_client,
                 amount_req_cashwithdrawal_client,
                 total_settlement_fee_client,
+                fee_switching_alto,
+                dpp_fee_switching_alto,
+                ppn_fee_switching_alto,
+                pph_fee_switching_alto,
+                total_settlement_fee_switching_alto,
+                fee_recon_alto,
+                dpp_fee_recon_alto,
+                ppn_fee_recon_alto,
+                pph_fee_recon_alto,
+                total_settlement_fee_recon_alto,
+                fee_cashlez,
+                dpp_fee_cashlez,
+                ppn_fee_cashlez,
+                pph_fee_cashlez,
+                total_settlement_fee_cashlez,
             };
             const findUniqueData = storedUniqueDatas.find(data => {
                 return data.no_batch === uniqueData.no_batch && data.client_id === uniqueData.client_id;
@@ -120,6 +162,7 @@ class ExcelHelper {
                 storedUniqueDatas.push(uniqueData);
             } else {
                 findUniqueData.count_transaction += uniqueData.count_transaction
+                findUniqueData.beneficiary += uniqueData.beneficiary
                 findUniqueData.revenue_rts += +uniqueData.revenue_rts
                 findUniqueData.dpp_revenue_rts += +uniqueData.dpp_revenue_rts
                 findUniqueData.ppn_revenue_rts += +uniqueData.ppn_revenue_rts
@@ -145,6 +188,21 @@ class ExcelHelper {
                 findUniqueData.ppn_fee_atmi += +uniqueData.ppn_fee_atmi
                 findUniqueData.pph_fee_atmi += +uniqueData.pph_fee_atmi
                 findUniqueData.total_settlement_fee_atmi += +uniqueData.total_settlement_fee_atmi
+                findUniqueData.fee_switching_alto += +uniqueData.fee_switching_alto
+                findUniqueData.dpp_fee_switching_alto += +uniqueData.dpp_fee_switching_alto
+                findUniqueData.ppn_fee_switching_alto += +uniqueData.ppn_fee_switching_alto
+                findUniqueData.pph_fee_switching_alto += +uniqueData.pph_fee_switching_alto
+                findUniqueData.total_settlement_fee_switching_alto += +uniqueData.total_settlement_fee_switching_alto
+                findUniqueData.fee_recon_alto += +uniqueData.fee_recon_alto
+                findUniqueData.dpp_fee_recon_alto += +uniqueData.dpp_fee_recon_alto
+                findUniqueData.ppn_fee_recon_alto += +uniqueData.ppn_fee_recon_alto
+                findUniqueData.pph_fee_recon_alto += +uniqueData.pph_fee_recon_alto
+                findUniqueData.total_settlement_fee_recon_alto += +uniqueData.total_settlement_fee_recon_alto
+                findUniqueData.fee_cashlez += +uniqueData.fee_cashlez
+                findUniqueData.dpp_fee_cashlez += +uniqueData.dpp_fee_cashlez
+                findUniqueData.ppn_fee_cashlez += +uniqueData.ppn_fee_cashlez
+                findUniqueData.pph_fee_cashlez += +uniqueData.pph_fee_cashlez
+                findUniqueData.total_settlement_fee_cashlez += +uniqueData.total_settlement_fee_cashlez
                 findUniqueData.fee_client += +uniqueData.fee_client
                 findUniqueData.dpp_fee_client += +uniqueData.dpp_fee_client
                 findUniqueData.ppn_fee_client += +uniqueData.ppn_fee_client
@@ -195,6 +253,7 @@ class ExcelHelper {
             { header: 'Client Name', key: 'client_name', width: 30 },
             { header: 'Type Transactions', key: 'type_trans', width: 18 },
             { header: 'Count Transactions', key: 'count_transaction', width: 18 },
+            { header: 'Beneficiary', key: 'beneficiary', width: 15 },
             { header: 'Revenue RTS', key: 'revenue_rts', width: 15 },
             { header: 'DPP Revenue RTS', key: 'dpp_revenue_rts', width: 15 },
             { header: 'PPN Revenue RTS', key: 'ppn_revenue_rts', width: 15 },
@@ -220,6 +279,21 @@ class ExcelHelper {
             { header: 'PPN Fee ATMI', key: 'ppn_fee_atmi', width: 15 },
             { header: 'PPH Fee ATMI', key: 'pph_fee_atmi', width: 15 },
             { header: 'Total Settlement Fee ATMI', key: 'total_settlement_fee_atmi', width: 15 },
+            { header: 'Fee Switching Alto', key: 'fee_switching_alto', width: 15 },
+            { header: 'DPP Fee Switching Alto', key: 'dpp_fee_switching_alto', width: 15 },
+            { header: 'PPN Fee Switching Alto', key: 'ppn_fee_switching_alto', width: 15 },
+            { header: 'PPH Fee Switching Alto', key: 'pph_fee_switching_alto', width: 15 },
+            { header: 'Total Settlement Fee Switching Alto', key: 'total_settlement_fee_switching_alto', width: 15 },
+            { header: 'Fee Recon Alto', key: 'fee_recon_alto', width: 15 },
+            { header: 'DPP Fee Recon Alto', key: 'dpp_fee_recon_alto', width: 15 },
+            { header: 'PPN Fee Recon Alto', key: 'ppn_fee_recon_alto', width: 15 },
+            { header: 'PPH Fee Recon Alto', key: 'pph_fee_recon_alto', width: 15 },
+            { header: 'Total Settlement Fee Recon Alto', key: 'total_settlement_fee_recon_alto', width: 15 },
+            { header: 'Fee Cashlez', key: 'fee_cashlez', width: 15 },
+            { header: 'DPP Fee Cashlez', key: 'dpp_fee_cashlez', width: 15 },
+            { header: 'PPN Fee Cashlez', key: 'ppn_fee_cashlez', width: 15 },
+            { header: 'PPH Fee Cashlez', key: 'pph_fee_cashlez', width: 15 },
+            { header: 'Total Settlement Fee Cashlez', key: 'total_settlement_fee_cashlez', width: 15 },
             { header: 'Fee Client', key: 'fee_client', width: 15 },
             { header: 'DPP Fee Client', key: 'dpp_fee_client', width: 15 },
             { header: 'PPN Fee Client', key: 'ppn_fee_client', width: 15 },
@@ -233,6 +307,7 @@ class ExcelHelper {
             const clientName = summaryData['name'];
             const typeTrans = summaryData['type_trans'];
             const countTransaction = summaryData['count_transaction'];
+            const beneficiary = summaryData['beneficiary'];
             const revenue_rts = summaryData['revenue_rts'];
             const dpp_revenue_rts = summaryData['dpp_revenue_rts'];
             const ppn_revenue_rts = summaryData['ppn_revenue_rts'];
@@ -258,6 +333,21 @@ class ExcelHelper {
             const ppn_fee_atmi = summaryData['ppn_fee_atmi'];
             const pph_fee_atmi = summaryData['pph_fee_atmi'];
             const total_settlement_fee_atmi = summaryData['total_settlement_fee_atmi'];
+            const fee_switching_alto = summaryData['fee_switching_alto'];
+            const dpp_fee_switching_alto = summaryData['dpp_fee_switching_alto'];
+            const ppn_fee_switching_alto = summaryData['ppn_fee_switching_alto'];
+            const pph_fee_switching_alto = summaryData['pph_fee_switching_alto'];
+            const total_settlement_fee_switching_alto = summaryData['total_settlement_fee_switching_alto'];
+            const fee_recon_alto = summaryData['fee_recon_alto'];
+            const dpp_fee_recon_alto = summaryData['dpp_fee_recon_alto'];
+            const ppn_fee_recon_alto = summaryData['ppn_fee_recon_alto'];
+            const pph_fee_recon_alto = summaryData['pph_fee_recon_alto'];
+            const total_settlement_fee_recon_alto = summaryData['total_settlement_fee_recon_alto'];
+            const fee_cashlez = summaryData['fee_cashlez'];
+            const dpp_fee_cashlez = summaryData['dpp_fee_cashlez'];
+            const ppn_fee_cashlez = summaryData['ppn_fee_cashlez'];
+            const pph_fee_cashlez = summaryData['pph_fee_cashlez'];
+            const total_settlement_fee_cashlez = summaryData['total_settlement_fee_cashlez'];
             const fee_client = summaryData['fee_client'];
             const dpp_fee_client = summaryData['dpp_fee_client'];
             const ppn_fee_client = summaryData['ppn_fee_client'];
@@ -270,6 +360,7 @@ class ExcelHelper {
                 client_name: clientName,
                 type_trans: typeTrans,
                 count_transaction: countTransaction,
+                beneficiary: beneficiary,
                 revenue_rts: revenue_rts,
                 dpp_revenue_rts: dpp_revenue_rts,
                 ppn_revenue_rts: ppn_revenue_rts,
@@ -295,6 +386,21 @@ class ExcelHelper {
                 ppn_fee_atmi: ppn_fee_atmi,
                 pph_fee_atmi: pph_fee_atmi,
                 total_settlement_fee_atmi: total_settlement_fee_atmi,
+                fee_switching_alto: fee_switching_alto,
+                dpp_fee_switching_alto: dpp_fee_switching_alto,
+                ppn_fee_switching_alto: ppn_fee_switching_alto,
+                pph_fee_switching_alto: pph_fee_switching_alto,
+                total_settlement_fee_switching_alto: total_settlement_fee_switching_alto,
+                fee_recon_alto: fee_recon_alto,
+                dpp_fee_recon_alto: dpp_fee_recon_alto,
+                ppn_fee_recon_alto: ppn_fee_recon_alto,
+                pph_fee_recon_alto: pph_fee_recon_alto,
+                total_settlement_fee_recon_alto: total_settlement_fee_recon_alto,
+                fee_cashlez: fee_cashlez,
+                dpp_fee_cashlez: dpp_fee_cashlez,
+                ppn_fee_cashlez: ppn_fee_cashlez,
+                pph_fee_cashlez: pph_fee_cashlez,
+                total_settlement_fee_cashlez: total_settlement_fee_cashlez,
                 fee_client: fee_client,
                 dpp_fee_client: dpp_fee_client,
                 ppn_fee_client: ppn_fee_client,
@@ -322,7 +428,8 @@ class ExcelHelper {
             attributes: [
                 'client_id',
                 'no_batch',
-                [sequelize.fn('SUM', sequelize.col('revenue_rts')), 'revenue_rts'],
+                [sequelize.fn('SUM', sequelize.col('summary.beneficiary')), 'beneficiary'],
+                [sequelize.fn('SUM', sequelize.col('summary.revenue_rts')), 'revenue_rts'],
                 [sequelize.fn('SUM', sequelize.col('dpp_revenue_rts')), 'dpp_revenue_rts'],
                 [sequelize.fn('SUM', sequelize.col('ppn_revenue_rts')), 'ppn_revenue_rts'],
                 [sequelize.fn('SUM', sequelize.col('pph_revenue_rts')), 'pph_revenue_rts'],
@@ -347,6 +454,21 @@ class ExcelHelper {
                 [sequelize.fn('SUM', sequelize.col('ppn_fee_atmi')), 'ppn_fee_atmi'],
                 [sequelize.fn('SUM', sequelize.col('pph_fee_atmi')), 'pph_fee_atmi'],
                 [sequelize.fn('SUM', sequelize.col('total_settlement_fee_atmi')), 'total_settlement_fee_atmi'],
+                [sequelize.fn('SUM', sequelize.col('fee_switching_alto')), 'fee_switching_alto'],
+                [sequelize.fn('SUM', sequelize.col('dpp_fee_switching_alto')), 'dpp_fee_switching_alto'],
+                [sequelize.fn('SUM', sequelize.col('ppn_fee_switching_alto')), 'ppn_fee_switching_alto'],
+                [sequelize.fn('SUM', sequelize.col('pph_fee_switching_alto')), 'pph_fee_switching_alto'],
+                [sequelize.fn('SUM', sequelize.col('total_settlement_fee_switching_alto')), 'total_settlement_fee_switching_alto'],
+                [sequelize.fn('SUM', sequelize.col('fee_recon_alto')), 'fee_recon_alto'],
+                [sequelize.fn('SUM', sequelize.col('dpp_fee_recon_alto')), 'dpp_fee_recon_alto'],
+                [sequelize.fn('SUM', sequelize.col('ppn_fee_recon_alto')), 'ppn_fee_recon_alto'],
+                [sequelize.fn('SUM', sequelize.col('pph_fee_recon_alto')), 'pph_fee_recon_alto'],
+                [sequelize.fn('SUM', sequelize.col('total_settlement_fee_recon_alto')), 'total_settlement_fee_recon_alto'],
+                [sequelize.fn('SUM', sequelize.col('fee_cashlez')), 'fee_cashlez'],
+                [sequelize.fn('SUM', sequelize.col('dpp_fee_cashlez')), 'dpp_fee_cashlez'],
+                [sequelize.fn('SUM', sequelize.col('ppn_fee_cashlez')), 'ppn_fee_cashlez'],
+                [sequelize.fn('SUM', sequelize.col('pph_fee_cashlez')), 'pph_fee_cashlez'],
+                [sequelize.fn('SUM', sequelize.col('total_settlement_fee_cashlez')), 'total_settlement_fee_cashlez'],
                 [sequelize.fn('SUM', sequelize.col('fee_client')), 'fee_client'],
                 [sequelize.fn('SUM', sequelize.col('dpp_fee_client')), 'dpp_fee_client'],
                 [sequelize.fn('SUM', sequelize.col('ppn_fee_client')), 'ppn_fee_client'],
@@ -420,6 +542,21 @@ class ExcelHelper {
             summary.ppn_fee_atmi = +summary.ppn_fee_atmi
             summary.pph_fee_atmi = +summary.pph_fee_atmi
             summary.total_settlement_fee_atmi = +summary.total_settlement_fee_atmi
+            summary.fee_switching_alto = +summary.fee_switching_alto
+            summary.dpp_fee_switching_alto = +summary.dpp_fee_switching_alto
+            summary.ppn_fee_switching_alto = +summary.ppn_fee_switching_alto
+            summary.pph_fee_switching_alto = +summary.pph_fee_switching_alto
+            summary.total_settlement_fee_switching_alto = +summary.total_settlement_fee_switching_alto
+            summary.fee_recon_alto = +summary.fee_recon_alto
+            summary.dpp_fee_recon_alto = +summary.dpp_fee_recon_alto
+            summary.ppn_fee_recon_alto = +summary.ppn_fee_recon_alto
+            summary.pph_fee_recon_alto = +summary.pph_fee_recon_alto
+            summary.total_settlement_fee_recon_alto = +summary.total_settlement_fee_recon_alto
+            summary.fee_cashlez = +summary.fee_cashlez
+            summary.dpp_fee_cashlez = +summary.dpp_fee_cashlez
+            summary.ppn_fee_cashlez = +summary.ppn_fee_cashlez
+            summary.pph_fee_cashlez = +summary.pph_fee_cashlez
+            summary.total_settlement_fee_cashlez = +summary.total_settlement_fee_cashlez
             summary.fee_client = +summary.fee_client
             summary.dpp_fee_client = +summary.dpp_fee_client
             summary.ppn_fee_client = +summary.ppn_fee_client
@@ -456,6 +593,21 @@ class ExcelHelper {
                 partner.ppn_fee_atmi += summary.ppn_fee_atmi
                 partner.pph_fee_atmi += summary.pph_fee_atmi
                 partner.total_settlement_fee_atmi += summary.total_settlement_fee_atmi
+                partner.fee_switching_alto += summary.fee_switching_alto
+                partner.dpp_fee_switching_alto += summary.dpp_fee_switching_alto
+                partner.ppn_fee_switching_alto += summary.ppn_fee_switching_alto
+                partner.pph_fee_switching_alto += summary.pph_fee_switching_alto
+                partner.total_settlement_fee_switching_alto += summary.total_settlement_fee_switching_alto
+                partner.fee_recon_alto += summary.fee_recon_alto
+                partner.dpp_fee_recon_alto += summary.dpp_fee_recon_alto
+                partner.ppn_fee_recon_alto += summary.ppn_fee_recon_alto
+                partner.pph_fee_recon_alto += summary.pph_fee_recon_alto
+                partner.total_settlement_fee_recon_alto += summary.total_settlement_fee_recon_alto
+                partner.fee_cashlez += summary.fee_cashlez
+                partner.dpp_fee_cashlez += summary.dpp_fee_cashlez
+                partner.ppn_fee_cashlez += summary.ppn_fee_cashlez
+                partner.pph_fee_cashlez += summary.pph_fee_cashlez
+                partner.total_settlement_fee_cashlez += summary.total_settlement_fee_cashlez
                 partner.fee_client += summary.fee_client
                 partner.dpp_fee_client += summary.dpp_fee_client
                 partner.ppn_fee_client += summary.ppn_fee_client
@@ -491,6 +643,21 @@ class ExcelHelper {
             data.ppn_fee_atmi = data.ppn_fee_atmi.toFixed(2)
             data.pph_fee_atmi = data.pph_fee_atmi.toFixed(2)
             data.total_settlement_fee_atmi = data.total_settlement_fee_atmi.toFixed(2)
+            data.fee_switching_alto = data.fee_switching_alto.toFixed(2)
+            data.dpp_fee_switching_alto = data.dpp_fee_switching_alto.toFixed(2)
+            data.ppn_fee_switching_alto = data.ppn_fee_switching_alto.toFixed(2)
+            data.pph_fee_switching_alto = data.pph_fee_switching_alto.toFixed(2)
+            data.total_settlement_fee_switching_alto = data.total_settlement_fee_switching_alto.toFixed(2)
+            data.fee_recon_alto = data.fee_recon_alto.toFixed(2)
+            data.dpp_fee_recon_alto = data.dpp_fee_recon_alto.toFixed(2)
+            data.ppn_fee_recon_alto = data.ppn_fee_recon_alto.toFixed(2)
+            data.pph_fee_recon_alto = data.pph_fee_recon_alto.toFixed(2)
+            data.total_settlement_fee_recon_alto = data.total_settlement_fee_recon_alto.toFixed(2)
+            data.fee_cashlez = data.fee_cashlez.toFixed(2)
+            data.dpp_fee_cashlez = data.dpp_fee_cashlez.toFixed(2)
+            data.ppn_fee_cashlez = data.ppn_fee_cashlez.toFixed(2)
+            data.pph_fee_cashlez = data.pph_fee_cashlez.toFixed(2)
+            data.total_settlement_fee_cashlez = data.total_settlement_fee_cashlez.toFixed(2)
             data.fee_client = data.fee_client.toFixed(2)
             data.dpp_fee_client = data.dpp_fee_client.toFixed(2)
             data.ppn_fee_client = data.ppn_fee_client.toFixed(2)

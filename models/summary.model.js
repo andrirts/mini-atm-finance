@@ -30,6 +30,11 @@ Summary.init({
         type: DataTypes.BIGINT,
         defaultValue: 0
     },
+    beneficiary: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0,
+    },
     revenue_rts: {
         allowNull: false,
         type: DataTypes.DECIMAL(20, 2),
@@ -151,6 +156,81 @@ Summary.init({
         defaultValue: 0
     },
     total_settlement_fee_atmi: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    fee_switching_alto: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    dpp_fee_switching_alto: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    ppn_fee_switching_alto: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    pph_fee_switching_alto: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    total_settlement_fee_switching_alto: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    fee_recon_alto: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    dpp_fee_recon_alto: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    ppn_fee_recon_alto: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    pph_fee_recon_alto: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    total_settlement_fee_recon_alto: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    fee_cashlez: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    dpp_fee_cashlez: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    ppn_fee_cashlez: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    pph_fee_cashlez: {
+        allowNull: false,
+        type: DataTypes.DECIMAL(20, 2),
+        defaultValue: 0
+    },
+    total_settlement_fee_cashlez: {
         allowNull: false,
         type: DataTypes.DECIMAL(20, 2),
         defaultValue: 0
